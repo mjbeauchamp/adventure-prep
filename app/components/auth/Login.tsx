@@ -25,18 +25,18 @@ export default function LoginButton() {
 
 
         // Call handleServerLogin to set the session cookie to 'login' the user on the server
-        // and create or update the Firestore profile
-        const actionResult = await handleServerLogin(idToken, {
+        // User database profile will be created or updated in ProfileManager.tsx once site AuthContext
+        // updates on successful login
+        try {
+          await handleServerLogin(idToken, {
             uid: user.uid,
             email: user.email,
             displayName: user.displayName,
             photoURL: user.photoURL,
-        });
-
-
-        if (actionResult && actionResult.error) {
-             showToastError(`Whoops! There was an error logging in: ${actionResult.error}`);
-             await clientAuth.signOut();
+          });
+        } catch (error) {
+          await clientAuth.signOut();
+          showToastError("Login: There was an error setting user session cookie. User features will be unavailable.");
         }
       } else {
          showToastError(`Whoops! Sign-in failed: No user returned.`);

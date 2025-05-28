@@ -6,7 +6,7 @@ import { useAuth } from "../context/AuthorizationProvider";
 
 
 export default function NavBar() {
-    const {user, loading} = useAuth();
+    const {user} = useAuth();
 
     return (
         <nav className="flex items-center justify-between p-4 bg-gray-800 text-white">
