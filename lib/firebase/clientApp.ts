@@ -1,7 +1,7 @@
 // CLIENT FIREBASE SETUP
 import { initializeApp, getApp, getApps } from "firebase/app";
 import { getAuth, Auth } from "firebase/auth";
-import { getFirestore } from 'firebase/firestore'; 
+import { getFirestore, Firestore } from 'firebase/firestore'; 
 
 const firebaseConfig = {
   apiKey: "AIzaSyAXT9BiQhgiE6-kvg3jlSVZ0TEVlW4nVh8",
@@ -28,7 +28,7 @@ function getClientApp() {
 
 let clientApp: ReturnType<typeof initializeApp>;
 let clientAuth: Auth;
-let clientDatabase;
+let clientDatabase: Firestore;
 
 try {
   clientApp = getClientApp();

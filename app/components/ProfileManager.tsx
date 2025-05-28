@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/app/context/AuthorizationProvider';
 import { userLogout } from '@/lib/firebase/actions/userLogout';
 import toast, { Toaster } from 'react-hot-toast';
-import { clientApp, clientAuth } from '@/lib/firebase/clientApp';
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp, getFirestore } from 'firebase/firestore';
+import { clientAuth, clientDatabase } from '@/lib/firebase/clientApp';
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { User } from 'firebase/auth';
 
 interface ProfileManagerProps {
@@ -16,7 +16,6 @@ export default function ProfileManager({ children }: ProfileManagerProps) {
     const showToastError = (message: string) => toast(message, {
         className: 'toast-error',
     });
-    const clientDatabase = getFirestore(clientApp);
     const { user, loading }: {user: User | null, loading: boolean} = useAuth();
     // processedUserId tracks if the profile processing has already been completed for initial login.
     // This prevents re-processing on re-renders or token refreshes for the same user.
@@ -24,6 +23,7 @@ export default function ProfileManager({ children }: ProfileManagerProps) {
 
     useEffect(() => {
         if (!loading && user && user !== null && processedUserId !== user.uid) {
+            console.log('USER', user)
             const processUserProfile = async () => {
                 try {
                     const userId = user.uid;
