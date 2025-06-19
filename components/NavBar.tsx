@@ -1,8 +1,8 @@
 'use client'
 
-import Login from './auth/Login'
-import Logout from "./auth/Logout";
-import { useAuth } from "../context/AuthorizationProvider";
+import Login from "./auth/Login";
+import LogoutButton from "./auth/LogoutButton";
+import { useAuth } from "./auth/AuthorizationProvider";
 
 
 export default function NavBar() {
@@ -15,7 +15,7 @@ export default function NavBar() {
             <li>
                 <a href="/" className="hover:underline">Home</a>
             </li>
-            {user ? <li><Logout /></li> : <li><Login /></li>}
+            {user ? <li><LogoutButton /></li> : <li><Login /></li>}
             </ul>
         </nav>
     );

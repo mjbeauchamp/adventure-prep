@@ -3,40 +3,78 @@ import { initializeApp, getApp, getApps } from "firebase/app";
 import { getAuth, Auth } from "firebase/auth";
 import { getFirestore, Firestore } from 'firebase/firestore'; 
 
-const firebaseConfig = {
-  apiKey: "AIzaSyAXT9BiQhgiE6-kvg3jlSVZ0TEVlW4nVh8",
-  authDomain: "adventureprep-318f1.firebaseapp.com",
-  projectId: "adventureprep-318f1",
-  storageBucket: "adventureprep-318f1.firebasestorage.app",
-  messagingSenderId: "681679030712",
-  appId: "1:681679030712:web:417517f90ea5106efce74d",
-  measurementId: "G-52X8Z3E9K3"
+type FirebaseConfig = {
+  apiKey: string;
+  authDomain: string;
+  projectId: string;
+  storageBucket: string;
+  messagingSenderId: string;
+  appId: string;
+  measurementId: string;
 };
+
+function validateEnvVar(value: string | undefined, name: string): string | null {
+  if (!value) {
+    console.warn(`Missing environment variable: ${name}`);
+    return null; 
+  }
+  return value;
+}
+
+console.log()
+
+const firebaseConfigValues = {
+  apiKey: validateEnvVar(process.env.NEXT_PUBLIC_FIREBASE_API_KEY, "NEXT_PUBLIC_FIREBASE_API_KEY"),
+  authDomain: validateEnvVar(process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN, "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN"),
+  projectId: validateEnvVar(process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID, "NEXT_PUBLIC_FIREBASE_PROJECT_ID"),
+  storageBucket: validateEnvVar(process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET, "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET"),
+  messagingSenderId: validateEnvVar(process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID, "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID"),
+  appId: validateEnvVar(process.env.NEXT_PUBLIC_FIREBASE_APP_ID, "NEXT_PUBLIC_FIREBASE_APP_ID"),
+  measurementId: validateEnvVar(process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID, "NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID"),
+};
+
+const isFirebaseConfigComplete = Object.values(firebaseConfigValues).every(val => typeof val === 'string');
+
+const firebaseConfig: FirebaseConfig | null = isFirebaseConfigComplete
+  ? (firebaseConfigValues as FirebaseConfig)
+  : null;
 
 // Initialize Firebase
 function getClientApp() {
-  try {
-    if (getApps().length) {
-      return getApp();
+  if (!isFirebaseConfigComplete) {
+    return null;
+  } else {
+    try {
+      if (getApps().length) {
+        return getApp();
+      }
+      return initializeApp(firebaseConfig as Record<string, string>);
+    } catch (error) {
+      console.error("Error initializing Firebase client app:", error);
+      return null;
     }
-    return initializeApp(firebaseConfig);
-  } catch (error) {
-    console.error("Error initializing Firebase client app:", error);
-    throw new Error("Failed to initialize Firebase client app");
   }
 }
 
-let clientApp: ReturnType<typeof initializeApp>;
-let clientAuth: Auth;
-let clientDatabase: Firestore;
+let clientApp: ReturnType<typeof initializeApp> | null = null;
+let clientAuth: Auth | null = null;
+let clientDatabase: Firestore | null = null;
 
 try {
-  clientApp = getClientApp();
-  clientAuth = getAuth(clientApp);
-  clientDatabase = getFirestore(clientApp);
+  if (isFirebaseConfigComplete) {
+    clientApp = getClientApp();
+    if (clientApp !== null) {
+      clientAuth = getAuth(clientApp);
+      clientDatabase = getFirestore(clientApp);
+    }
+  }
+  
 } catch (error) {
   console.error("Error setting up Firebase client auth services:", error);
-  throw new Error("Critical: Firebase client initialization failed. App cannot continue.");
 }
 
-export { clientApp, clientAuth, clientDatabase };
+function isFirebaseReady() {
+  return clientApp !== null && clientAuth !== null && clientDatabase !== null;
+}
+
+export { clientApp, clientAuth, clientDatabase, isFirebaseReady };

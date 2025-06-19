@@ -37,3 +37,7 @@ body {
   color: #faad14;
   background-color: #ffffff;
 }
+
+button {
+  cursor: pointer;
+}

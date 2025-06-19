@@ -7,7 +7,7 @@ const COOKIE_MAX_AGE = 60 * 60 * 24 * 5; // 5 days in seconds
 
 /*
  * NOTE: We're not currently using the session cookie created by this function, but if we do want 
- * to use it in the future for server-side access to Firestore, it's getting set correctly here and
+ * to use it in the future for server-side access to Firestore, it's getting set here and
  * cleaned up correctly with userLogout.ts elsewhere in the code.
  */
 export async function handleServerLogin(idToken: any, initialUserData: any) {

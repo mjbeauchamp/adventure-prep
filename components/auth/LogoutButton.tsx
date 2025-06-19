@@ -2,10 +2,10 @@
 
 import { useRouter } from 'next/navigation';
 import { clientAuth } from '@/lib/firebase/clientApp';
-import { userLogout } from '@/lib/firebase/actions/userLogout'; 
+import { userLogout } from '@/lib/firebase/actions/userServerLogout'; 
 import toast, { Toaster } from 'react-hot-toast';
 
-export default function Logout() {
+export default function LogoutButton() {
     const router = useRouter();
     const showToastError = (message: string) => toast(message, {
         className: 'toast-error',

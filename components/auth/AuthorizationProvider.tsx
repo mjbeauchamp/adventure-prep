@@ -3,7 +3,8 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { clientAuth } from '@/lib/firebase/clientApp';
+import { clientAuth, isFirebaseReady } from '@/lib/firebase/clientApp';
+import toast, { Toaster } from 'react-hot-toast';
 
 interface AuthProps {
     children: React.ReactNode;
@@ -23,17 +24,28 @@ export default function AuthorizationProvider({ children }: AuthProps) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(clientAuth, (user) => {
-      setUser(user);
-      setLoading(false);
-    });
+  const showToastError = (message: string) => toast(message, {
+      className: 'toast-error',
+  });
 
-    return () => unsubscribe();
+  useEffect(() => {
+    if (isFirebaseReady() && clientAuth !== null) {
+      const unsubscribe = onAuthStateChanged(clientAuth, (user) => {
+        setUser(user);
+        setLoading(false);
+      });
+
+      return () => unsubscribe();
+    } else {
+      console.warn("Firebase not initialized. Skipping auth state subscription.");
+      setLoading(false);
+      showToastError("There is an issue with user profile features. User features will be unavailable at this time.");
+    }
   }, []);
 
   return (
     <AuthContext.Provider value={{ user, loading }}>
+      <Toaster />
       {children}
     </AuthContext.Provider>
   );
