@@ -35,8 +35,8 @@ export default function Login() {
                   <RiCloseCircleFill />
                 </IconContext.Provider>
             </button>
-            <DialogTitle className="font-bold">Sign In</DialogTitle>
-            {isEmailSignIn ? null : <Description>Welcome! How would you like to start your adventure?</Description>}
+            <DialogTitle className="font-bold">Start Your Adventure!</DialogTitle>
+            {isEmailSignIn ? null : <Description>Welcome! How would you like to sign in?</Description>}
             {isEmailSignIn ? <EmailSignInForm closeLoginDialog={closeModal} goBack={() => setIsEmailSignIn(false)}  /> :
               <div className="flex flex-col items-center gap-4 mt-6 w-full">
                 <div className="flex gap-4 w-3/4">

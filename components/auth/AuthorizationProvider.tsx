@@ -13,16 +13,23 @@ interface AuthProps {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  displayName: string;
+  setDisplayName: React.Dispatch<React.SetStateAction<string>>;
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
+  displayName: '',
+  setDisplayName: () => {},
+  setUser: () => {}
 });
 
 export default function AuthorizationProvider({ children }: AuthProps) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [displayName, setDisplayName] = useState('');
 
   const showToastError = (message: string) => toast(message, {
       className: 'toast-error',
@@ -33,6 +40,9 @@ export default function AuthorizationProvider({ children }: AuthProps) {
       const unsubscribe = onAuthStateChanged(clientAuth, (user) => {
         setUser(user);
         setLoading(false);
+        if (user?.displayName) {
+          setDisplayName(user?.displayName);
+        }
       });
 
       return () => unsubscribe();
@@ -44,11 +54,11 @@ export default function AuthorizationProvider({ children }: AuthProps) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading }}>
+    <AuthContext.Provider value={{ user, loading, displayName, setDisplayName, setUser }}>
       <Toaster />
       {children}
     </AuthContext.Provider>
   );
 }
 
-export const useAuth = (): {user: User | null, loading: boolean} => useContext(AuthContext);
+export const useAuth = (): AuthContextType => useContext(AuthContext);

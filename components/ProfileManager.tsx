@@ -2,10 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/components/auth/AuthorizationProvider';
-import { userLogout } from '@/lib/firebase/actions/userServerLogout';
 import toast, { Toaster } from 'react-hot-toast';
 import { clientAuth, clientDatabase, isFirebaseReady } from '@/lib/firebase/clientApp';
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp, runTransaction } from 'firebase/firestore';
+import { doc, serverTimestamp, runTransaction } from 'firebase/firestore';
 import { User } from 'firebase/auth';
 
 interface ProfileManagerProps {
@@ -16,17 +15,18 @@ export default function ProfileManager({ children }: ProfileManagerProps) {
     const showToastError = (message: string) => toast(message, {
         className: 'toast-error',
     });
-    const { user, loading }: {user: User | null, loading: boolean} = useAuth();
+    const { user, loading, displayName } = useAuth();
     // processedUserId tracks if the profile processing has already been completed for initial login.
     // This prevents re-processing on re-renders or token refreshes for the same user.
     const [processedUserId, setProcessedUserId] = useState<string | null>(null);
+    const [processedUserDisplayName, setProcessedUserDisplayName] = useState<string | null>(null);
 
     const processUserProfile = async (user: User) => {
         try {
             if (clientDatabase === null ) {
                 console.error("Profile Manager: Error creating/updating Firestore user profile");
-                userLogout(); // Calls the logout function to clear cookie session set during client login
                 setProcessedUserId(null);
+                setProcessedUserDisplayName(null)
                 showToastError("Profile Manager: Error with user sign up or login. User features will be unavailable.");
                 return;
             }
@@ -49,9 +49,17 @@ export default function ProfileManager({ children }: ProfileManagerProps) {
                     console.log(`ProfileManager: New user profile successfully created.`);
                 } else {
                     // --- Document ALREADY exists - User is logging in again or returning ---
-                    transaction.update(userDocRef, {
-                        lastLoginAt: serverTimestamp(),
-                    });
+                    const currentData = userDoc.data();
+                    const updates: Record<string, any> = {
+                    lastLoginAt: serverTimestamp(),
+                    };
+
+                    if (user.displayName && user.displayName !== currentData.displayName) {
+                        updates.displayName = user.displayName;
+                        console.log(`ProfileManager: Updating displayName to "${user.displayName}"`);
+                    }
+                                    
+                    transaction.update(userDocRef, updates);
                     console.log(`ProfileManager: Existing user profile last login time successfully updated.`);
                 }
             });
@@ -59,25 +67,28 @@ export default function ProfileManager({ children }: ProfileManagerProps) {
             console.log("Profile Manager: User profile update completed.");
         } catch (firestoreError: any) {
             console.error("Profile Manager: Error creating/updating Firestore user profile:", firestoreError);
-            userLogout(); // Calls the logout function to clear cookie session set during client login
             setProcessedUserId(null);
+            setProcessedUserDisplayName(null)
             if (clientAuth) {
                 await clientAuth.signOut();
             }
             showToastError("Profile Manager: Error with user sign up or login. User features will be unavailable.");
         } finally {
             setProcessedUserId(user.uid);
+            setProcessedUserDisplayName(user.displayName);
         }
     };
 
     useEffect(() => {
-        if (!loading && isFirebaseReady() && user?.uid && processedUserId !== user.uid) {
+        if (!loading && isFirebaseReady() && user?.uid && (processedUserId !== user.uid || processedUserDisplayName !== displayName)) {
+           console.log('Running processUserProfile AGAIN')
             processUserProfile(user);
 
         } else if (!loading && !user && processedUserId !== null) {
            setProcessedUserId(null);
+           setProcessedUserDisplayName(null);
         }
-    }, [user, loading, processedUserId]); 
+    }, [user, loading, processedUserId, processedUserDisplayName, displayName]); 
 
     return (
         <>

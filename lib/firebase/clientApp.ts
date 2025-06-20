@@ -1,4 +1,7 @@
 // CLIENT FIREBASE SETUP
+// NOTE: We still want the user to be able to access informational parts of the site, 
+// even if user profile and login aren't working. So we're not throwing errors here,
+// and instead need to do null checks for this file's exports when using them
 import { initializeApp, getApp, getApps } from "firebase/app";
 import { getAuth, Auth } from "firebase/auth";
 import { getFirestore, Firestore } from 'firebase/firestore'; 
@@ -56,6 +59,9 @@ function getClientApp() {
   }
 }
 
+// If Firebase initialization is unsuccessful, we want these values to be null
+// When consuming these values throughout the app, do null check to ensure
+// that initialization was successful
 let clientApp: ReturnType<typeof initializeApp> | null = null;
 let clientAuth: Auth | null = null;
 let clientDatabase: Firestore | null = null;
@@ -77,4 +83,4 @@ function isFirebaseReady() {
   return clientApp !== null && clientAuth !== null && clientDatabase !== null;
 }
 
-export { clientApp, clientAuth, clientDatabase, isFirebaseReady };
+export { clientAuth, clientDatabase, isFirebaseReady };

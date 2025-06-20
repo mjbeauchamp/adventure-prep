@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import toast, { Toaster } from 'react-hot-toast';
 import { clientAuth, isFirebaseReady } from '@/lib/firebase/clientApp';
-import { handleServerLogin } from '@/lib/firebase/actions/userServerLogin';
 import styles from './GoogleBtn.module.scss';
 
 const provider = new GoogleAuthProvider();
@@ -16,9 +15,10 @@ export default function GoogleLoginButton(props: any) {
   });
 
   const handleLogin = async () => {
-    if (!isFirebaseReady) {
+    if (!isFirebaseReady()) {
       console.warn("Firebase not initialized. Skipping auth state subscription.");
       showToastError("There is an issue with user profile features. User features will be unavailable at this time.");
+      return;
     }
 
     setIsLoading(true);
@@ -31,26 +31,7 @@ export default function GoogleLoginButton(props: any) {
       }
 
       if (user) {
-        const idToken = await user.getIdToken();
-
-
-        // Call handleServerLogin to set the session cookie to 'login' the user on the server
-        // User database profile will be created or updated in ProfileManager.tsx once site AuthContext
-        // updates on successful login
-        try {
-          await handleServerLogin(idToken, {
-            uid: user.uid,
-            email: user.email,
-            displayName: user.displayName,
-            photoURL: user.photoURL,
-          });
-          props.closeLoginDialog(); // Close the login dialog if successful
-        } catch (error) {
-          if (clientAuth) {
-            await clientAuth.signOut();
-          }
-          showToastError("Login: There was an error setting user session cookie. User features will be unavailable.");
-        }
+        props.closeLoginDialog(); // Close the login dialog if successful
       } else {
          showToastError(`Whoops! Sign-in failed: No user returned.`);
       }

@@ -2,21 +2,21 @@
 
 import { useRouter } from 'next/navigation';
 import { clientAuth } from '@/lib/firebase/clientApp';
-import { userLogout } from '@/lib/firebase/actions/userServerLogout'; 
+import { useAuth } from './AuthorizationProvider';
 import toast, { Toaster } from 'react-hot-toast';
 
 export default function LogoutButton() {
+    const { setDisplayName } = useAuth();
     const router = useRouter();
     const showToastError = (message: string) => toast(message, {
         className: 'toast-error',
     });
     const handleLogout = async () => {
         try {
-            await clientAuth.signOut();
-
-            // After client logout, call the server action to delete the session cookie so 
-            // the user is logged out on the server side as well
-            await userLogout();
+            if (clientAuth) {
+                await clientAuth.signOut();
+                setDisplayName('');
+            }   
             
             // TODO: update this router push so it'll only run if the user logs out on a protected page
             router.push('/');
