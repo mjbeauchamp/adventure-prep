@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@/components/auth/AuthorizationProvider';
 import toast, { Toaster } from 'react-hot-toast';
 import { clientAuth, clientDatabase, isFirebaseReady } from '@/lib/firebase/clientApp';
@@ -16,17 +16,17 @@ export default function ProfileManager({ children }: ProfileManagerProps) {
         className: 'toast-error',
     });
     const { user, loading, displayName } = useAuth();
-    // processedUserId tracks if the profile processing has already been completed for initial login.
+    // previousUserState tracks if the profile processing has already been completed for initial login or user updates.
     // This prevents re-processing on re-renders or token refreshes for the same user.
-    const [processedUserId, setProcessedUserId] = useState<string | null>(null);
-    const [processedUserDisplayName, setProcessedUserDisplayName] = useState<string | null>(null);
+    const previousUserState = useRef<{ uid: string | null, displayName: string | null }>({
+        uid: null,
+        displayName: null,
+    });
 
     const processUserProfile = async (user: User) => {
         try {
             if (clientDatabase === null ) {
                 console.error("Profile Manager: Error creating/updating Firestore user profile");
-                setProcessedUserId(null);
-                setProcessedUserDisplayName(null)
                 showToastError("Profile Manager: Error with user sign up or login. User features will be unavailable.");
                 return;
             }
@@ -67,28 +67,23 @@ export default function ProfileManager({ children }: ProfileManagerProps) {
             console.log("Profile Manager: User profile update completed.");
         } catch (firestoreError: any) {
             console.error("Profile Manager: Error creating/updating Firestore user profile:", firestoreError);
-            setProcessedUserId(null);
-            setProcessedUserDisplayName(null)
             if (clientAuth) {
                 await clientAuth.signOut();
             }
             showToastError("Profile Manager: Error with user sign up or login. User features will be unavailable.");
-        } finally {
-            setProcessedUserId(user.uid);
-            setProcessedUserDisplayName(user.displayName);
         }
     };
 
     useEffect(() => {
-        if (!loading && isFirebaseReady() && user?.uid && (processedUserId !== user.uid || processedUserDisplayName !== displayName)) {
-           console.log('Running processUserProfile AGAIN')
+        if (!loading && isFirebaseReady() && user?.uid && (user.uid !== previousUserState.current.uid ||
+            user.displayName !== previousUserState.current.displayName)) {
             processUserProfile(user);
+            previousUserState.current = { uid: user.uid, displayName: user.displayName || null };
 
-        } else if (!loading && !user && processedUserId !== null) {
-           setProcessedUserId(null);
-           setProcessedUserDisplayName(null);
+        } else if (!loading && !user && previousUserState.current.uid !== null) {
+            previousUserState.current = { uid: null, displayName: null };
         }
-    }, [user, loading, processedUserId, processedUserDisplayName, displayName]); 
+    }, [user, loading, displayName]); 
 
     return (
         <>

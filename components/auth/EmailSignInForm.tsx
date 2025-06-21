@@ -5,7 +5,6 @@ import { createUserWithEmailAndPassword, updateProfile, signInWithEmailAndPasswo
 import { clientAuth, isFirebaseReady } from '@/lib/firebase/clientApp';
 import styles from './EmailSignInForm.module.scss';
 import toast, { Toaster } from 'react-hot-toast';
-import { useAuth } from "../auth/AuthorizationProvider";
 
 export default function EmailSignInForm(props: any) {
   const [email, setEmail] = useState('');
@@ -14,8 +13,7 @@ export default function EmailSignInForm(props: any) {
   const [firebaseError, setFirebaseError] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [showExistingUserLogin, setShowExistingUserLogin] = useState(true);
-
-  const { setUser, setDisplayName } = useAuth();
+  const [loadingSubmit, setLoadingSubmit] = useState(false);
 
   const showToastError = (message: string) => toast(message, {
       className: 'toast-error',
@@ -51,13 +49,13 @@ export default function EmailSignInForm(props: any) {
     }
 
     try {
+      setLoadingSubmit(true);
       if (clientAuth && !showExistingUserLogin) {
         const userCredential = await createUserWithEmailAndPassword(clientAuth, email, password);
         if (userCredential && displayName ) {
+          console.log('PROFILE MANAGER: User displayName update started')
           await updateProfile(userCredential.user, { displayName });
           await clientAuth.currentUser?.reload();
-          setUser(clientAuth.currentUser);
-          setDisplayName(displayName);
         }
         setSubmitted(true);
       } else if (clientAuth && showExistingUserLogin) {
@@ -69,6 +67,8 @@ export default function EmailSignInForm(props: any) {
     } catch (error: any) {
       const message = mapFirebaseError(error.code);
       setFirebaseError(message);
+    } finally {
+      setLoadingSubmit(false)
     }
   };
 
@@ -112,8 +112,8 @@ export default function EmailSignInForm(props: any) {
         {firebaseError && <p className={styles.warning}>{firebaseError}</p>}
         {submitted && <p className={styles.success}>🎉 Account created successfully!</p>}
 
-        {!showExistingUserLogin ? <button className={styles.button}  type="submit">Create Account</button> : null}
-        {showExistingUserLogin ? <button className={styles.button}  type="submit">Sign In</button> : null}
+        {!showExistingUserLogin ? <button className={styles.button}  type="submit" disabled={loadingSubmit}>Create Account</button> : null}
+        {showExistingUserLogin ? <button className={styles.button}  type="submit" disabled={loadingSubmit}>Sign In</button> : null}
         <button className={styles.button}  onClick={props.goBack}>Go Back</button>
       </form>
     </>

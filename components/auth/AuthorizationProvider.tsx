@@ -2,7 +2,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { onAuthStateChanged, User } from 'firebase/auth';
+import { onIdTokenChanged, User } from 'firebase/auth';
 import { clientAuth, isFirebaseReady } from '@/lib/firebase/clientApp';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -37,7 +37,7 @@ export default function AuthorizationProvider({ children }: AuthProps) {
 
   useEffect(() => {
     if (isFirebaseReady() && clientAuth !== null) {
-      const unsubscribe = onAuthStateChanged(clientAuth, (user) => {
+      const unsubscribe = onIdTokenChanged(clientAuth, (user) => {
         setUser(user);
         setLoading(false);
         if (user?.displayName) {
